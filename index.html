@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nokia Memo Generator</title>
+    <title>Nokia Memo Generator (jQuery)</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
         body {
             font-family: sans-serif;
@@ -22,7 +24,6 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             border: 2px solid #555;
             margin-bottom: 20px;
-            /* Agar canvas responsif tapi tetap terjaga rasionya */
             max-width: 100%; 
         }
 
@@ -40,7 +41,7 @@
             width: 100%;
             max-width: 500px;
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 2 kolom */
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
         
@@ -73,13 +74,14 @@
             display: none;
             color: #ffff00;
             margin-bottom: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
     <h2>Nokia Memo Generator</h2>
-    <div id="loader">Sedang mengambil quote...</div>
+    <div id="loader">Sedang mengambil quote via jQuery...</div>
 
     <div class="canvas-container">
         <canvas id="memeCanvas"></canvas>
@@ -123,7 +125,8 @@
     <script>
         // CONFIG
         const API_KEY = "9zAnv7rg3z+Re3XeiyrFjg==DQRDaDt5Ln0kQm7w";
-        const API_URL = "https://api.api-ninjas.com/v1/quotes";
+        // Catatan: Biasanya endpoint API Ninjas Quotes adalah v1. Saya set ke v1 agar stabil.
+        const API_URL = "https://api.api-ninjas.com/v1/quotes"; 
         const CATEGORIES = ['success', 'wisdom', 'life', 'inspirational', 'happiness', 'future'];
         
         // ASSETS
@@ -132,7 +135,7 @@
         const fontName = "NokiaCustom";
 
         // STATE
-        let currentQuote = "Loading...";
+        let currentQuote = "Press Generate Button";
         let currentAuthor = "";
         let bgImage = new Image();
         let isFontLoaded = false;
@@ -161,76 +164,78 @@
                 canvas.width = bgImage.width;
                 canvas.height = bgImage.height;
                 
-                // Set default slider max values based on image size
+                // Set slider max values
                 document.getElementById('posX').max = canvas.width;
                 document.getElementById('posY').max = canvas.height;
                 document.getElementById('maxW').max = canvas.width;
                 
-                generateQuote(); // Start first quote
+                // Generate pertama kali
+                generateQuote(); 
             };
         }
 
-        // 2. FETCH DATA
-        async function generateQuote() {
-            loader.style.display = 'block';
-            const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+        // 2. FETCH DATA MENGGUNAKAN JQUERY AJAX (MODIFIED)
+        function generateQuote() {
+            // Tampilkan loading
+            $('#loader').show();
             
-            try {
-                const response = await fetch(`${API_URL}?category=${category}`, {
-                    headers: { 'X-Api-Key': API_KEY }
-                });
-                const data = await response.json();
-                
-                if (data && data.length > 0) {
-                    currentQuote = data[0].quote;
-                    currentAuthor = "- " + data[0].author;
-                } else {
-                    currentQuote = "Failed to fetch quote.";
-                    currentAuthor = "";
+            // Pilih kategori acak agar quote selalu beda
+            const randomCategory = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+
+            $.ajax({
+                method: 'GET',
+                url: API_URL,
+                headers: { 'X-Api-Key': API_KEY },
+                contentType: 'application/json',
+                // Data dikirim sebagai parameter
+                data: { category: randomCategory }, 
+                success: function(result) {
+                    // Log sukses
+                    console.log("Data received:", result);
+                    
+                    if(result && result.length > 0) {
+                        currentQuote = result[0].quote;
+                        currentAuthor = "- " + result[0].author;
+                        updateCanvas(); // Gambar ulang canvas
+                    }
+                    
+                    $('#loader').hide();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error:', textStatus, errorThrown);
+                    currentQuote = "Error fetching quote.";
+                    currentAuthor = "Check Console";
+                    updateCanvas();
+                    $('#loader').hide();
                 }
-            } catch (err) {
-                console.error(err);
-                currentQuote = "Network Error. Check Console.";
-                currentAuthor = "";
-            } finally {
-                loader.style.display = 'none';
-                updateCanvas();
-            }
+            });
         }
 
-        // 3. DRAWING LOGIC (Inti Program)
+        // 3. DRAWING LOGIC (Sama seperti sebelumnya)
         function updateCanvas() {
             if (!bgImage.complete) return;
 
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Draw Background
             ctx.drawImage(bgImage, 0, 0);
 
-            // Get Settings from Sliders
-            const x = parseInt(document.getElementById('posX').value);
-            const y = parseInt(document.getElementById('posY').value);
-            const lineHeight = parseInt(document.getElementById('lineH').value);
-            const fontSize = parseInt(document.getElementById('fontS').value);
-            const maxWidth = parseInt(document.getElementById('maxW').value);
+            const x = parseInt($('#posX').val());
+            const y = parseInt($('#posY').val());
+            const lineHeight = parseInt($('#lineH').val());
+            const fontSize = parseInt($('#fontS').val());
+            const maxWidth = parseInt($('#maxW').val());
 
-            // Update UI Labels
-            document.getElementById('valX').textContent = x;
-            document.getElementById('valY').textContent = y;
-            document.getElementById('valLH').textContent = lineHeight;
-            document.getElementById('valFS').textContent = fontSize;
-            document.getElementById('valW').textContent = maxWidth;
+            // Update Label Angka
+            $('#valX').text(x);
+            $('#valY').text(y);
+            $('#valLH').text(lineHeight);
+            $('#valFS').text(fontSize);
+            $('#valW').text(maxWidth);
 
-            // Font Settings
             ctx.font = `${fontSize}px ${fontName}, monospace`;
-            ctx.fillStyle = "#000000"; // Text color black
-            ctx.textBaseline = "alphabetic"; // Penting agar pas di garis
+            ctx.fillStyle = "#000000"; 
+            ctx.textBaseline = "alphabetic";
 
-            // Gabungkan Quote dan Author untuk proses wrapping
-            // (Opsional: Author mau di baris baru atau nyambung)
             const fullText = currentQuote; 
-
-            // Text Wrapping Logic
             const words = fullText.split(' ');
             let line = '';
             let currentY = y;
@@ -248,10 +253,8 @@
                     line = testLine;
                 }
             }
-            // Draw last line of quote
             ctx.fillText(line, x, currentY);
             
-            // Draw Author on next line
             currentY += lineHeight;
             ctx.fillText(currentAuthor, x, currentY);
         }
