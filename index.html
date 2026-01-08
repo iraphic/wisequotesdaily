@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nokia Generator (Fixed)</title>
+    <title>Nokia Generator (No Author)</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -56,7 +56,7 @@
             margin-bottom: 5px;
         }
 
-        textarea, input[type="text"] {
+        textarea {
             width: 100%;
             box-sizing: border-box;
             background: #121212;
@@ -67,9 +67,9 @@
             font-size: 1rem;
             margin-bottom: 10px;
             font-family: inherit;
+            height: 100px; 
+            resize: vertical;
         }
-
-        textarea { height: 80px; resize: vertical; }
 
         .btn-apply {
             background: #4CAF50;
@@ -136,7 +136,7 @@
 <body>
 
     <div class="container">
-        <h2>Nokia Memo Creator</h2>
+        <h2>Nokia Memo Creator (Quote Only)</h2>
         <div id="status">Ready.</div>
         
         <canvas id="nokiaCanvas"></canvas>
@@ -144,11 +144,7 @@
         <div class="manual-area">
             <label>📝 Teks Quote</label>
             <textarea id="inputQuote" placeholder="Ketik kalimat di sini...">Menunggu Generate...</textarea>
-            
-            <label>👤 Author (Opsional)</label>
-            <input type="text" id="inputAuthor" placeholder="Misal: Anonim">
-            
-            <button class="btn-apply" onclick="applyManualText()">✅ Terapkan Teks ke Layar</button>
+            <button class="btn-apply" onclick="applyManualText()">✅ Terapkan Teks</button>
         </div>
 
         <div class="controls">
@@ -179,31 +175,28 @@
         </div>
 
         <div class="action-buttons">
-            <button class="btn btn-api" onclick="getSmartQuote()">🔄 Generate Random Quote</button>
+            <button class="btn btn-api" onclick="getSmartQuote()">🔄 Generate Quote</button>
             <button class="btn btn-dl" onclick="downloadImg()">💾 Download Gambar</button>
         </div>
     </div>
 
     <script>
-        // CONFIG - Kita ganti API Ninja dengan yang lebih ramah CORS
+        // CONFIG
         const API_URL = "https://dummyjson.com/quotes/random";
-        
-        // ASSETS
         const IMAGE_SRC = "nokia_blank.png";
         const FONT_FILE = "nokia_font_final.ttf";
         const FONT_NAME = "NokiaRetro";
 
-        // DATABASE LOKAL (OFFLINE MODE)
-        // Jika API gagal, quote diambil dari sini. Tambahkan sesuka hati.
+        // DATABASE LOKAL
         const LOCAL_DB = [
-            { quote: "Whatever you do in life, just make sure at the end of the day you are happy.", author: "WiseQuotes" },
-            { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-            { quote: "Life is what happens when you're busy making other plans.", author: "John Lennon" },
-            { quote: "Get busy living or get busy dying.", author: "Stephen King" },
-            { quote: "You only live once, but if you do it right, once is enough.", author: "Mae West" },
-            { quote: "The purpose of our lives is to be happy.", author: "Dalai Lama" },
-            { quote: "Sukses adalah berjalan dari satu kegagalan ke kegagalan lain tanpa kehilangan antusiasme.", author: "Winston Churchill" },
-            { quote: "Jangan menunggu waktu yang tepat. Ciptakanlah.", author: "Anonim" }
+            "Whatever you do in life, just make sure at the end of the day you are happy.",
+            "The only way to do great work is to love what you do.",
+            "Life is what happens when you're busy making other plans.",
+            "Get busy living or get busy dying.",
+            "You only live once, but if you do it right, once is enough.",
+            "The purpose of our lives is to be happy.",
+            "Sukses adalah berjalan dari satu kegagalan ke kegagalan lain tanpa kehilangan antusiasme.",
+            "Jangan menunggu waktu yang tepat. Ciptakanlah."
         ];
 
         // GLOBAL VARS
@@ -212,7 +205,6 @@
         let bgImg = new Image();
         
         let currentText = "";
-        let currentAuthor = "";
 
         // --- INIT ---
         $(document).ready(function() {
@@ -220,94 +212,80 @@
         });
 
         async function loadResources() {
-            // 1. Load Font
             const font = new FontFace(FONT_NAME, `url(${FONT_FILE})`);
             try {
                 await font.load();
                 document.fonts.add(font);
             } catch (err) { console.warn("Font default used."); }
 
-            // 2. Load Image
             bgImg.src = IMAGE_SRC;
             bgImg.onload = function() {
                 canvas.width = bgImg.width;
                 canvas.height = bgImg.height;
                 
-                // Set slider max values dinamis (tetap menghormati value HTML)
+                // Update Max Values Slider
                 if(bgImg.width > 500) $('#posX').attr('max', bgImg.width);
                 if(bgImg.height > 1000) $('#posY').attr('max', bgImg.height);
                 if(bgImg.width > 1916) $('#maxW').attr('max', bgImg.width);
 
-                // Start
                 getSmartQuote(); 
             };
         }
 
-        // --- HYBRID FETCH SYSTEM (API + LOCAL) ---
+        // --- FETCH SYSTEM ---
         function getSmartQuote() {
             $('#status').text("Mengambil data...");
 
-            // Coba ambil dari DummyJSON (Lebih stabil & Bebas CORS)
             $.ajax({
                 method: 'GET',
                 url: API_URL,
-                timeout: 3000, // Jika 3 detik loading, langsung switch ke lokal
+                timeout: 3000,
                 success: function(result) {
-                    // Jika sukses ambil dari internet
-                    updateInputAndCanvas(result.quote, result.author);
-                    $('#status').text("Sumber: Internet (DummyJSON)");
+                    // Hanya ambil quote, abaikan author
+                    updateInputAndCanvas(result.quote);
+                    $('#status').text("Sumber: Internet");
                 },
                 error: function() {
-                    // Jika GAGAL/Offline -> Ambil dari LOCAL_DB
-                    console.log("Internet gagal, menggunakan database lokal.");
                     const randomPick = LOCAL_DB[Math.floor(Math.random() * LOCAL_DB.length)];
-                    updateInputAndCanvas(randomPick.quote, randomPick.author);
-                    $('#status').text("Sumber: Database Lokal (Offline Mode)");
+                    // LOCAL_DB sekarang hanya array string (tanpa author object)
+                    updateInputAndCanvas(randomPick);
+                    $('#status').text("Sumber: Offline Mode");
                 }
             });
         }
 
-        function updateInputAndCanvas(text, author) {
+        function updateInputAndCanvas(text) {
             $('#inputQuote').val(text);
-            $('#inputAuthor').val(author);
             applyManualText();
         }
 
-        // --- MANUAL INPUT HANDLER ---
+        // --- MANUAL INPUT ---
         function applyManualText() {
             const rawText = $('#inputQuote').val();
-            const rawAuthor = $('#inputAuthor').val();
-
             if (!rawText) return;
-
             currentText = rawText;
-            currentAuthor = rawAuthor ? "- " + rawAuthor : "";
-
             drawCanvas();
         }
 
-        // --- LOGIC GAMBAR CANVAS ---
+        // --- DRAWING LOGIC (NO AUTHOR) ---
         function drawCanvas() {
             if (!bgImg.complete) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, 0, 0);
 
-            // Ambil Slider Values
             const x = parseInt($('#posX').val());
             const y = parseInt($('#posY').val());
             const lh = parseInt($('#lineH').val());
             const fs = parseInt($('#fontS').val());
             const maxW = parseInt($('#maxW').val());
 
-            // Update Angka di Label
             $('#valX').text(x);
             $('#valY').text(y);
             $('#valLH').text(lh);
             $('#valFS').text(fs);
             $('#valW').text(maxW);
 
-            // Setting Font
             ctx.font = `${fs}px ${FONT_NAME}, monospace`;
             ctx.fillStyle = "#181818"; 
             ctx.textBaseline = "alphabetic"; 
@@ -330,15 +308,12 @@
             }
             ctx.fillText(line, x, currentY);
             
-            if (currentAuthor !== "") {
-                currentY += lh; 
-                ctx.fillText(currentAuthor, x, currentY);
-            }
+            // BAGIAN AUTHOR SUDAH DIHAPUS DARI SINI
         }
 
         function downloadImg() {
             const link = document.createElement('a');
-            link.download = `nokia_memo_${Date.now()}.png`;
+            link.download = `nokia_quote_${Date.now()}.png`;
             link.href = canvas.toDataURL();
             link.click();
         }
