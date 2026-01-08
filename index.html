@@ -3,20 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Nokia Generator Final</title>
+=======
+    <title>Nokia Memo Generator (jQuery)</title>
+>>>>>>> parent of 1576b2e (Update index.html)
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #1a1a1a;
-            color: #ddd;
+            font-family: sans-serif;
+            background: #222;
+            color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
         }
+        h2 { margin-bottom: 10px; }
         
+<<<<<<< HEAD
         .container {
             background: #2a2a2a;
             padding: 20px;
@@ -25,28 +31,38 @@
             max-width: 800px; /* Lebar container diperbesar */
             width: 100%;
             text-align: center;
+=======
+        /* Container Canvas */
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border: 2px solid #555;
+            margin-bottom: 20px;
+            max-width: 100%; 
+>>>>>>> parent of 1576b2e (Update index.html)
         }
 
         canvas {
+            display: block;
             max-width: 100%;
             height: auto;
-            border: 2px solid #444;
-            margin: 15px 0;
-            border-radius: 4px;
         }
 
+        /* Controls */
         .controls {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            text-align: left;
-            background: #333;
-            padding: 15px;
-            border-radius: 8px;
         }
-
+        
         .full-width { grid-column: span 2; }
         
+<<<<<<< HEAD
         label { 
             font-size: 0.85rem; 
             color: #ffd700; /* Warna label kuning biar jelas */
@@ -57,34 +73,96 @@
         
         input[type="range"] { width: 100%; cursor: ew-resize; }
 
+=======
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; }
+        
+        input[type="range"] { width: 100%; cursor: pointer; }
+        
+>>>>>>> parent of 1576b2e (Update index.html)
         button {
-            width: 100%;
             padding: 12px;
-            border: none;
-            border-radius: 6px;
             font-weight: bold;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+<<<<<<< HEAD
             transition: 0.2s;
+=======
+>>>>>>> parent of 1576b2e (Update index.html)
             font-size: 1rem;
         }
-
-        .btn-gen { background: #007bff; color: white; }
-        .btn-gen:hover { background: #0056b3; }
         
+<<<<<<< HEAD
         .btn-dl { background: #28a745; color: white; }
         .btn-dl:hover { background: #1e7e34; }
 
         #status { margin-bottom: 10px; color: #aaa; }
+=======
+        .btn-gen { background: #008CBA; color: white; }
+        .btn-dl { background: #4CAF50; color: white; }
+        .btn-gen:hover { background: #007399; }
+        
+        /* Loading Indicator */
+        #loader {
+            display: none;
+            color: #ffff00;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+>>>>>>> parent of 1576b2e (Update index.html)
     </style>
 </head>
 <body>
 
+<<<<<<< HEAD
     <div class="container">
         <h2>Nokia Memo Generator</h2>
         <div id="status">Siap generate...</div>
-        
-        <canvas id="nokiaCanvas"></canvas>
+=======
+    <h2>Nokia Memo Generator</h2>
+    <div id="loader">Sedang mengambil quote via jQuery...</div>
 
+    <div class="canvas-container">
+        <canvas id="memeCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="full-width">
+            <button class="btn-gen" onclick="generateQuote()">🔄 Generate New Quote</button>
+        </div>
+
+        <div class="input-group">
+            <label>Posisi Kiri/Kanan (X): <span id="valX">0</span></label>
+            <input type="range" id="posX" min="0" max="500" value="25" oninput="updateCanvas()">
+        </div>
+
+        <div class="input-group">
+            <label>Posisi Atas/Bawah (Y): <span id="valY">0</span></label>
+            <input type="range" id="posY" min="0" max="500" value="285" oninput="updateCanvas()">
+        </div>
+
+        <div class="input-group">
+            <label>Jarak Antar Baris (Line Height): <span id="valLH">0</span></label>
+            <input type="range" id="lineH" min="10" max="100" value="56" oninput="updateCanvas()">
+        </div>
+
+        <div class="input-group">
+            <label>Ukuran Font: <span id="valFS">0</span></label>
+            <input type="range" id="fontS" min="10" max="60" value="34" oninput="updateCanvas()">
+        </div>
+>>>>>>> parent of 1576b2e (Update index.html)
+        
+        <div class="input-group full-width">
+            <label>Lebar Teks (Wrap Width): <span id="valW">0</span></label>
+            <input type="range" id="maxW" min="100" max="1000" value="950" oninput="updateCanvas()">
+        </div>
+
+<<<<<<< HEAD
         <div class="controls">
             <div class="input-group">
                 <label>Posisi Kiri (X): <span id="valX"></span></label>
@@ -115,12 +193,17 @@
                 <button class="btn-gen" onclick="getQuote()">🔄 Generate Quote</button>
                 <button class="btn-dl" onclick="downloadImg()">💾 Download</button>
             </div>
+=======
+        <div class="full-width">
+            <button class="btn-dl" onclick="downloadImage()">💾 Download Image</button>
+>>>>>>> parent of 1576b2e (Update index.html)
         </div>
     </div>
 
     <script>
         // CONFIG
         const API_KEY = "9zAnv7rg3z+Re3XeiyrFjg==DQRDaDt5Ln0kQm7w";
+<<<<<<< HEAD
         const API_URL = "https://api.api-ninjas.com/v1/quotes"; 
         
         // ASSETS
@@ -133,8 +216,24 @@
         let ctx = canvas.getContext('2d');
         let bgImg = new Image();
         let currentText = "Tekan Generate untuk memulai...";
-        let currentAuthor = "";
+=======
+        // Catatan: Biasanya endpoint API Ninjas Quotes adalah v1. Saya set ke v1 agar stabil.
+        const API_URL = "https://api.api-ninjas.com/v1/quotes"; 
+        const CATEGORIES = ['success', 'wisdom', 'life', 'inspirational', 'happiness', 'future'];
+        
+        // ASSETS
+        const imgUrl = "nokia_blank.png";
+        const fontUrl = "nokia_font_final.ttf";
+        const fontName = "NokiaCustom";
 
+        // STATE
+        let currentQuote = "Press Generate Button";
+>>>>>>> parent of 1576b2e (Update index.html)
+        let currentAuthor = "";
+        let bgImage = new Image();
+        let isFontLoaded = false;
+
+<<<<<<< HEAD
         // INIT
         $(document).ready(function() {
             loadResources();
@@ -168,47 +267,128 @@
             $('#status').text("Loading data...");
             const cats = ['success', 'life', 'wisdom', 'happiness'];
             const randomCat = cats[Math.floor(Math.random() * cats.length)];
+=======
+        // ELEMENTS
+        const canvas = document.getElementById('memeCanvas');
+        const ctx = canvas.getContext('2d');
+        const loader = document.getElementById('loader');
+
+        // 1. SETUP AWAL
+        async function init() {
+            // Load Font
+            const font = new FontFace(fontName, `url(${fontUrl})`);
+            try {
+                await font.load();
+                document.fonts.add(font);
+                isFontLoaded = true;
+                console.log("Font loaded!");
+            } catch (e) {
+                console.error("Font failed, using fallback", e);
+            }
+
+            // Load Image
+            bgImage.src = imgUrl;
+            bgImage.onload = () => {
+                canvas.width = bgImage.width;
+                canvas.height = bgImage.height;
+                
+                // Set slider max values
+                document.getElementById('posX').max = canvas.width;
+                document.getElementById('posY').max = canvas.height;
+                document.getElementById('maxW').max = canvas.width;
+                
+                // Generate pertama kali
+                generateQuote(); 
+            };
+        }
+
+        // 2. FETCH DATA MENGGUNAKAN JQUERY AJAX (MODIFIED)
+        function generateQuote() {
+            // Tampilkan loading
+            $('#loader').show();
+            
+            // Pilih kategori acak agar quote selalu beda
+            const randomCategory = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+>>>>>>> parent of 1576b2e (Update index.html)
 
             $.ajax({
                 method: 'GET',
                 url: API_URL,
                 headers: { 'X-Api-Key': API_KEY },
+<<<<<<< HEAD
                 data: { category: randomCat },
+=======
+                contentType: 'application/json',
+                // Data dikirim sebagai parameter
+                data: { category: randomCategory }, 
+>>>>>>> parent of 1576b2e (Update index.html)
                 success: function(result) {
-                    if (result && result.length > 0) {
-                        currentText = result[0].quote;
+                    // Log sukses
+                    console.log("Data received:", result);
+                    
+                    if(result && result.length > 0) {
+                        currentQuote = result[0].quote;
                         currentAuthor = "- " + result[0].author;
+<<<<<<< HEAD
                         $('#status').text("Quote Loaded!");
                         drawCanvas();
+=======
+                        updateCanvas(); // Gambar ulang canvas
+>>>>>>> parent of 1576b2e (Update index.html)
                     }
+                    
+                    $('#loader').hide();
                 },
+<<<<<<< HEAD
                 error: function() {
                     $('#status').text("API Error. Coba lagi.");
+=======
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error:', textStatus, errorThrown);
+                    currentQuote = "Error fetching quote.";
+                    currentAuthor = "Check Console";
+                    updateCanvas();
+                    $('#loader').hide();
+>>>>>>> parent of 1576b2e (Update index.html)
                 }
             });
         }
 
+<<<<<<< HEAD
         // RENDER CANVAS
         function drawCanvas() {
             if (!bgImg.complete) return;
+=======
+        // 3. DRAWING LOGIC (Sama seperti sebelumnya)
+        function updateCanvas() {
+            if (!bgImage.complete) return;
+>>>>>>> parent of 1576b2e (Update index.html)
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(bgImg, 0, 0);
+            ctx.drawImage(bgImage, 0, 0);
 
+<<<<<<< HEAD
             // Get Values
+=======
+>>>>>>> parent of 1576b2e (Update index.html)
             const x = parseInt($('#posX').val());
             const y = parseInt($('#posY').val());
-            const lh = parseInt($('#lineH').val());
-            const fs = parseInt($('#fontS').val());
-            const maxW = parseInt($('#maxW').val());
+            const lineHeight = parseInt($('#lineH').val());
+            const fontSize = parseInt($('#fontS').val());
+            const maxWidth = parseInt($('#maxW').val());
 
+<<<<<<< HEAD
             // Update Labels
+=======
+            // Update Label Angka
+>>>>>>> parent of 1576b2e (Update index.html)
             $('#valX').text(x);
             $('#valY').text(y);
-            $('#valLH').text(lh);
-            $('#valFS').text(fs);
-            $('#valW').text(maxW);
+            $('#valLH').text(lineHeight);
+            $('#valFS').text(fontSize);
+            $('#valW').text(maxWidth);
 
+<<<<<<< HEAD
             // Font Settings
             ctx.font = `${fs}px ${FONT_NAME}, monospace`;
             ctx.fillStyle = "#181818"; // Hitam pekat tapi tidak 100% (sedikit soft)
@@ -216,33 +396,62 @@
 
             // Logic Wrapping
             const words = currentText.split(' ');
+=======
+            ctx.font = `${fontSize}px ${fontName}, monospace`;
+            ctx.fillStyle = "#000000"; 
+            ctx.textBaseline = "alphabetic";
+
+            const fullText = currentQuote; 
+            const words = fullText.split(' ');
+>>>>>>> parent of 1576b2e (Update index.html)
             let line = '';
             let currentY = y;
 
             for (let n = 0; n < words.length; n++) {
+<<<<<<< HEAD
                 let testLine = line + words[n] + ' ';
                 let metrics = ctx.measureText(testLine);
                 if (metrics.width > maxW && n > 0) {
                     ctx.fillText(line, x, currentY);
                     line = words[n] + ' ';
                     currentY += lh;
+=======
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                const testWidth = metrics.width;
+
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, currentY);
+                    line = words[n] + ' ';
+                    currentY += lineHeight;
+>>>>>>> parent of 1576b2e (Update index.html)
                 } else {
                     line = testLine;
                 }
             }
             ctx.fillText(line, x, currentY);
             
+<<<<<<< HEAD
             // Opsional: Author (bisa di-uncomment jika mau ditampilkan)
             // currentY += lh;
             // ctx.fillText(currentAuthor, x, currentY);
+=======
+            currentY += lineHeight;
+            ctx.fillText(currentAuthor, x, currentY);
+>>>>>>> parent of 1576b2e (Update index.html)
         }
 
-        function downloadImg() {
+        // 4. DOWNLOAD
+        function downloadImage() {
             const link = document.createElement('a');
-            link.download = `nokia_quote_${Date.now()}.png`;
-            link.href = canvas.toDataURL();
+            link.download = 'nokia_quote.png';
+            link.href = canvas.toDataURL("image/png");
             link.click();
         }
+
+        // Jalankan
+        init();
+
     </script>
 </body>
 </html>
