@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nokia Generator (Anti-Fail)</title>
+    <title>Nokia Generator Final</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -22,7 +22,7 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 600px;
+            max-width: 800px; /* Lebar container diperbesar */
             width: 100%;
             text-align: center;
         }
@@ -49,12 +49,13 @@
         
         label { 
             font-size: 0.85rem; 
-            color: #aaa; 
+            color: #ffd700; /* Warna label kuning biar jelas */
             display: block; 
             margin-bottom: 5px; 
+            font-weight: bold;
         }
         
-        input[type="range"] { width: 100%; }
+        input[type="range"] { width: 100%; cursor: ew-resize; }
 
         button {
             width: 100%;
@@ -64,6 +65,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
+            font-size: 1rem;
         }
 
         .btn-gen { background: #007bff; color: white; }
@@ -72,181 +74,147 @@
         .btn-dl { background: #28a745; color: white; }
         .btn-dl:hover { background: #1e7e34; }
 
-        #status {
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            color: #ffd700;
-            min-height: 20px;
-        }
+        #status { margin-bottom: 10px; color: #aaa; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Nokia Quote Generator</h2>
-        <div id="status">Ready.</div>
+        <h2>Nokia Memo Generator</h2>
+        <div id="status">Siap generate...</div>
         
         <canvas id="nokiaCanvas"></canvas>
 
         <div class="controls">
             <div class="input-group">
-                <label>Posisi X (Kiri-Kanan): <span id="valX"></span></label>
-                <input type="range" id="posX" min="0" max="200" value="48" oninput="drawCanvas()">
+                <label>Posisi Kiri (X): <span id="valX"></span></label>
+                <input type="range" id="posX" min="0" max="300" value="229" oninput="drawCanvas()">
             </div>
 
             <div class="input-group">
-                <label>Posisi Y (Atas-Bawah): <span id="valY"></span></label>
-                <input type="range" id="posY" min="0" max="500" value="288" oninput="drawCanvas()">
+                <label>Posisi Atas (Y): <span id="valY"></span></label>
+                <input type="range" id="posY" min="0" max="700" value="641" oninput="drawCanvas()">
             </div>
 
             <div class="input-group">
-                <label>Jarak Garis (Line Height): <span id="valLH"></span></label>
-                <input type="range" id="lineH" min="20" max="100" value="57" oninput="drawCanvas()">
+                <label>Jarak Baris (Line Height): <span id="valLH"></span></label>
+                <input type="range" id="lineH" min="30" max="100" value="59" oninput="drawCanvas()">
             </div>
 
             <div class="input-group">
                 <label>Ukuran Font: <span id="valFS"></span></label>
-                <input type="range" id="fontS" min="10" max="60" value="34" oninput="drawCanvas()">
+                <input type="range" id="fontS" min="20" max="300" value="102" oninput="drawCanvas()">
             </div>
 
             <div class="input-group full-width">
-                <label>Lebar Area Teks: <span id="valW"></span></label>
-                <input type="range" id="maxW" min="100" max="1200" value="960" oninput="drawCanvas()">
+                <label>Batas Kanan Teks: <span id="valW"></span></label>
+                <input type="range" id="maxW" min="500" max="1200" value="940" oninput="drawCanvas()">
             </div>
 
             <div class="full-width" style="display:flex; gap:10px;">
-                <button class="btn-gen" onclick="getQuote()">🔄 New Quote</button>
+                <button class="btn-gen" onclick="getQuote()">🔄 Generate Quote</button>
                 <button class="btn-dl" onclick="downloadImg()">💾 Download</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- KONFIGURASI API ---
+        // CONFIG
         const API_KEY = "9zAnv7rg3z+Re3XeiyrFjg==DQRDaDt5Ln0kQm7w";
-        const API_URL = "https://api.api-ninjas.com/v1/quotes"; // Gunakan V1 yang stabil
+        const API_URL = "https://api.api-ninjas.com/v1/quotes"; 
         
-        // --- DATABASE LOKAL (FALLBACK JIKA API ERROR) ---
-        const LOCAL_QUOTES = [
-            { quote: "Whatever you do in life, just make sure at the end of the day you are happy.", author: "WiseQuotes" },
-            { quote: "Life is way too short for stress & unhappiness.", author: "DailyWisdom" },
-            { quote: "Do not wait for the perfect moment, take the moment and make it perfect.", author: "Unknown" },
-            { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
-            { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" }
-        ];
-
-        // --- ASSETS ---
+        // ASSETS
         const IMAGE_SRC = "nokia_blank.png";
         const FONT_FILE = "nokia_font_final.ttf";
         const FONT_NAME = "NokiaRetro";
 
-        // --- VARIABLES ---
+        // VARIABLES
         let canvas = document.getElementById('nokiaCanvas');
         let ctx = canvas.getContext('2d');
         let bgImg = new Image();
-        let currentText = "";
+        let currentText = "Tekan Generate untuk memulai...";
         let currentAuthor = "";
 
-        // --- INIT ---
+        // INIT
         $(document).ready(function() {
             loadResources();
         });
 
         async function loadResources() {
-            // 1. Load Font
+            // Load Font
             const font = new FontFace(FONT_NAME, `url(${FONT_FILE})`);
             try {
                 await font.load();
                 document.fonts.add(font);
-                console.log("Font Loaded");
-            } catch (err) {
-                console.warn("Font failed, using default.");
-            }
+            } catch (err) { console.warn("Font default used."); }
 
-            // 2. Load Image
+            // Load Image
             bgImg.src = IMAGE_SRC;
             bgImg.onload = function() {
                 canvas.width = bgImg.width;
                 canvas.height = bgImg.height;
                 
-                // Set max range inputs dynamically based on image size
+                // Update slider max values dynamically
                 $('#posX').attr('max', bgImg.width);
                 $('#posY').attr('max', bgImg.height);
                 $('#maxW').attr('max', bgImg.width);
 
-                // Generate First Quote
-                getQuote();
+                getQuote(); // Auto start
             };
         }
 
-        // --- LOGIC UTAMA ---
+        // FETCH API
         function getQuote() {
-            $('#status').text("Mengambil data...");
-            
-            const cats = ['success', 'life', 'wisdom', 'future'];
+            $('#status').text("Loading data...");
+            const cats = ['success', 'life', 'wisdom', 'happiness'];
             const randomCat = cats[Math.floor(Math.random() * cats.length)];
 
-            // Request API dengan jQuery
             $.ajax({
                 method: 'GET',
                 url: API_URL,
                 headers: { 'X-Api-Key': API_KEY },
                 data: { category: randomCat },
-                timeout: 5000, // Timeout 5 detik
                 success: function(result) {
                     if (result && result.length > 0) {
                         currentText = result[0].quote;
                         currentAuthor = "- " + result[0].author;
-                        $('#status').text("Quote API dimuat!");
+                        $('#status').text("Quote Loaded!");
                         drawCanvas();
-                    } else {
-                        useFallback("API mengembalikan data kosong.");
                     }
                 },
-                error: function(xhr, status, error) {
-                    // JIKA GAGAL, PAKAI DATA LOKAL
-                    console.error("API Error:", error);
-                    useFallback("Gagal koneksi API. Menggunakan Mode Offline.");
+                error: function() {
+                    $('#status').text("API Error. Coba lagi.");
                 }
             });
         }
 
-        function useFallback(msg) {
-            $('#status').text(msg);
-            const randomLocal = LOCAL_QUOTES[Math.floor(Math.random() * LOCAL_QUOTES.length)];
-            currentText = randomLocal.quote;
-            currentAuthor = randomLocal.author;
-            drawCanvas();
-        }
-
+        // RENDER CANVAS
         function drawCanvas() {
             if (!bgImg.complete) return;
 
-            // 1. Bersihkan Canvas & Gambar Background
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, 0, 0);
 
-            // 2. Ambil Value dari Slider
+            // Get Values
             const x = parseInt($('#posX').val());
             const y = parseInt($('#posY').val());
             const lh = parseInt($('#lineH').val());
             const fs = parseInt($('#fontS').val());
             const maxW = parseInt($('#maxW').val());
 
-            // Update Label Angka di HTML
+            // Update Labels
             $('#valX').text(x);
             $('#valY').text(y);
             $('#valLH').text(lh);
             $('#valFS').text(fs);
             $('#valW').text(maxW);
 
-            // 3. Setup Font
-            ctx.font = `${fs}px ${FONT_NAME}, sans-serif`;
-            ctx.fillStyle = "#000000"; 
+            // Font Settings
+            ctx.font = `${fs}px ${FONT_NAME}, monospace`;
+            ctx.fillStyle = "#181818"; // Hitam pekat tapi tidak 100% (sedikit soft)
             ctx.textBaseline = "alphabetic"; 
-            // 'alphabetic' memudahkan menaruh teks tepat di atas garis buku
 
-            // 4. Word Wrapping Logic
+            // Logic Wrapping
             const words = currentText.split(' ');
             let line = '';
             let currentY = y;
@@ -254,22 +222,19 @@
             for (let n = 0; n < words.length; n++) {
                 let testLine = line + words[n] + ' ';
                 let metrics = ctx.measureText(testLine);
-                let testWidth = metrics.width;
-
-                if (testWidth > maxW && n > 0) {
+                if (metrics.width > maxW && n > 0) {
                     ctx.fillText(line, x, currentY);
                     line = words[n] + ' ';
-                    currentY += lh; // Pindah baris sesuai line height
+                    currentY += lh;
                 } else {
                     line = testLine;
                 }
             }
-            // Tulis baris terakhir quote
             ctx.fillText(line, x, currentY);
             
-            // Tulis Author di baris berikutnya
-            currentY += lh;
-            // ctx.fillText(currentAuthor, x, currentY); // Uncomment jika ingin menampilkan author
+            // Opsional: Author (bisa di-uncomment jika mau ditampilkan)
+            // currentY += lh;
+            // ctx.fillText(currentAuthor, x, currentY);
         }
 
         function downloadImg() {
