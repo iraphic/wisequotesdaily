@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nokia Quote Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Wise Quotes Daily</h1>
+        <div class="preview-area">
+            <img id="quote-image" src="" alt="Generated Quote will appear here" style="display: none;">
+            <div id="loading" style="display: none;">Generating...</div>
+            <div id="error-message" style="display: none; color: red;"></div>
+        </div>
+        <button id="generate-btn" onclick="generateImage()">Generate New Quote</button>
+        <p class="note">Make sure 'nokia_blank.png' and 'pixel_font.ttf' are in the 'static' folder!</p>
+    </div>
+
+    <script>
+        async function generateImage() {
+            const img = document.getElementById('quote-image');
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-message');
+            const btn = document.getElementById('generate-btn');
+
+            img.style.display = 'none';
+            loading.style.display = 'block';
+            errorMsg.style.display = 'none';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/generate');
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to generate image');
+                }
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                img.src = url;
+                img.style.display = 'block';
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorMsg.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        // Generate one on load
+        window.onload = generateImage;
+    </script>
+</body>
+</html>
