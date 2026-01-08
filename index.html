@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wise Quotes Daily</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="app">
+      <h1>Generator Nokia Memo</h1>
+      <div class="controls">
+        <div class="field">
+          <label>API Key</label>
+          <input id="apiKey" type="password" placeholder="Masukkan API Key">
+        </div>
+        <div class="field">
+          <label>Kategori</label>
+          <select id="category"></select>
+        </div>
+        <div class="field">
+          <label>Template PNG</label>
+          <input id="templateFile" type="file" accept="image/png,image/jpeg">
+        </div>
+        <div class="field">
+          <label>Font TTF dari URL</label>
+          <input id="fontUrl" type="url" placeholder="https://.../font.ttf">
+        </div>
+        <div class="field">
+          <label>Atau unggah Font TTF</label>
+          <input id="fontFile" type="file" accept=".ttf">
+        </div>
+        <div class="buttons">
+          <button id="generateBtn">Generate</button>
+          <button id="downloadBtn">Download</button>
+        </div>
+        <div class="hint">Jika link font tidak bisa dimuat karena CORS, unggah file TTF.</div>
+      </div>
+      <canvas id="canvas"></canvas>
+      <div class="info" id="info"></div>
+    </div>
+    <script>
+      const API_URL = 'https://api.api-ninjas.com/v1/quotes';
+      const TARGET_CATEGORIES = ['success','wisdom','life','inspirational','happiness','future'];
+      const categorySelect = document.getElementById('category');
+      const apiKeyInput = document.getElementById('apiKey');
+      const templateFileInput = document.getElementById('templateFile');
+      const fontUrlInput = document.getElementById('fontUrl');
+      const fontFileInput = document.getElementById('fontFile');
+      const generateBtn = document.getElementById('generateBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const canvas = document.getElementById('canvas');
+      const info = document.getElementById('info');
+      const ctx = canvas.getContext('2d');
+      let templateImage = null;
+      let currentFontFamily = 'Arial';
+      TARGET_CATEGORIES.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c;
+        o.textContent = c;
+        categorySelect.appendChild(o);
+      });
+      function saveLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+      function loadLocal(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null}}
+      const savedKey = loadLocal('apiKey');
+      if(savedKey) apiKeyInput.value = savedKey;
+      const savedCategory = loadLocal('category');
+      if(savedCategory && TARGET_CATEGORIES.includes(savedCategory)) categorySelect.value = savedCategory;
+      async function loadFontFromUrl(url){
+        if(!url) return false;
+        try{
+          const res = await fetch(url,{mode:'cors'});
+          const blob = await res.blob();
+          const fr = new FileReader();
+          const loaded = await new Promise((resolve,reject)=>{
+            fr.onload = ()=>resolve(fr.result);
+            fr.onerror = reject;
+            fr.readAsArrayBuffer(blob);
+          });
+          const font = new FontFace('CustomTTF',loaded);
+          await font.load();
+          document.fonts.add(font);
+          currentFontFamily = 'CustomTTF';
+          return true;
+        }catch(e){
+          return false;
+        }
+      }
+      async function loadFontFromFile(file){
+        if(!file) return false;
+        try{
+          const buf = await file.arrayBuffer();
+          const font = new FontFace('CustomTTF',buf);
+          await font.load();
+          document.fonts.add(font);
+          currentFontFamily = 'CustomTTF';
+          return true;
+        }catch(e){
+          return false;
+        }
+      }
+      function loadTemplateFromFile(file){
+        return new Promise((resolve,reject)=>{
+          if(!file){resolve(false);return}
+          const img = new Image();
+          img.onload = ()=>{templateImage = img; resizeCanvasToTemplate(); resolve(true)};
+          img.onerror = ()=>reject(new Error('Template gagal dimuat'));
+          const url = URL.createObjectURL(file);
+          img.src = url;
+        });
+      }
+      function resizeCanvasToTemplate(){
+        if(!templateImage) return;
+        canvas.width = templateImage.naturalWidth || templateImage.width;
+        canvas.height = templateImage.naturalHeight || templateImage.height;
+      }
+      function measureLines(fontSize, text, maxW){
+        ctx.font = fontSize+'px '+currentFontFamily;
+        const words = text.split(/\s+/);
+        const lines = [];
+        let line = '';
+        for(const w of words){
+          const test = line ? line+' '+w : w;
+          if(ctx.measureText(test).width <= maxW){
+            line = test;
+          }else{
+            if(line) lines.push(line);
+            line = w;
+          }
+        }
+        if(line) lines.push(line);
+        return lines;
+      }
+      function drawTextBlock(text){
+        if(!templateImage){return false}
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(templateImage,0,0,canvas.width,canvas.height);
+        let areaX = Math.round(canvas.width*0.05);
+        let areaY = Math.round(canvas.height*0.19);
+        let areaW = Math.round(canvas.width*0.90);
+        let areaH = Math.round(canvas.height*0.70);
+        let fontSize = Math.round(canvas.height*0.045);
+        let lineHeight = Math.round(fontSize*1.15);
+        let lines = measureLines(fontSize,text,areaW-8);
+        while(lines.length*lineHeight > areaH && fontSize>14){
+          fontSize -= 1;
+          lineHeight = Math.round(fontSize*1.15);
+          lines = measureLines(fontSize,text,areaW-8);
+        }
+        ctx.fillStyle = '#000';
+        ctx.textBaseline = 'top';
+        ctx.font = fontSize+'px '+currentFontFamily;
+        let y = areaY;
+        for(const line of lines){
+          if(y+lineHeight>areaY+areaH) break;
+          ctx.fillText(line,areaX,y);
+          y += lineHeight;
+        }
+        const wmSize = Math.round(canvas.height*0.03);
+        ctx.font = wmSize+'px '+currentFontFamily;
+        ctx.globalAlpha = 0.6;
+        ctx.fillText('@wisequotesdaily_', areaX, areaY+areaH+Math.round(wmSize*0.2));
+        ctx.globalAlpha = 1;
+        return true;
+      }
+      async function fetchQuote(apiKey, category){
+        const url = API_URL+'?category='+encodeURIComponent(category);
+        const res = await fetch(url,{headers:{'X-Api-Key':apiKey}});
+        if(!res.ok) throw new Error('Gagal mengambil quote');
+        const data = await res.json();
+        const item = Array.isArray(data) && data[0] ? data[0] : null;
+        if(!item || !item.quote) throw new Error('Data tidak valid');
+        return item;
+      }
+      function todayKey(){
+        const d = new Date();
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+      function cacheToday(obj){
+        saveLocal('daily',Object.assign({date:todayKey()},obj));
+      }
+      function getCachedToday(){
+        const c = loadLocal('daily');
+        if(!c) return null;
+        if(c.date===todayKey()) return c;
+        return null;
+      }
+      downloadBtn.addEventListener('click',()=>{
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/jpeg',0.92);
+        a.download = 'wisequotesdaily.jpg';
+        a.click();
+      });
+      templateFileInput.addEventListener('change',async ()=>{
+        await loadTemplateFromFile(templateFileInput.files[0]);
+        const c = getCachedToday();
+        if(c && c.img) {
+          const img = new Image();
+          img.onload=()=>{ctx.drawImage(img,0,0)};
+          img.src = c.img;
+        }
+      });
+      fontUrlInput.addEventListener('change',async ()=>{
+        const ok = await loadFontFromUrl(fontUrlInput.value.trim());
+        info.textContent = ok ? 'Font dari URL aktif' : 'Gagal memuat font URL';
+      });
+      fontFileInput.addEventListener('change',async ()=>{
+        const ok = await loadFontFromFile(fontFileInput.files[0]);
+        info.textContent = ok ? 'Font dari file aktif' : 'Gagal memuat font file';
+      });
+      categorySelect.addEventListener('change',()=>{
+        saveLocal('category',categorySelect.value);
+      });
+      apiKeyInput.addEventListener('change',()=>{
+        saveLocal('apiKey',apiKeyInput.value.trim());
+      });
+      generateBtn.addEventListener('click',async ()=>{
+        const apiKey = apiKeyInput.value.trim();
+        const category = categorySelect.value || TARGET_CATEGORIES[Math.floor(Math.random()*TARGET_CATEGORIES.length)];
+        if(!templateImage){info.textContent='Unggah template terlebih dahulu';return}
+        if(!apiKey){info.textContent='Masukkan API Key';return}
+        info.textContent='Mengambil quote...';
+        try{
+          const q = await fetchQuote(apiKey,category);
+          const ok = drawTextBlock(q.quote);
+          if(ok){
+            const img = canvas.toDataURL('image/jpeg',0.92);
+            cacheToday({img,quote:q.quote,author:q.author||'',category});
+            info.textContent='Selesai';
+          }else{
+            info.textContent='Gagal menggambar';
+          }
+        }catch(e){
+          info.textContent='Gagal mengambil quote';
+        }
+      });
+      async function boot(){
+        const cached = getCachedToday();
+        if(cached && cached.img){
+          const img = new Image();
+          img.onload=()=>{
+            canvas.width = img.width; canvas.height = img.height;
+            ctx.drawImage(img,0,0);
+          };
+          img.src = cached.img;
+        }
+      }
+      boot();
+    </script>
+  </body>
+</html>
+
