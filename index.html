@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nokia Generator (No Author)</title>
+    <title>Nokia Generator (Natural Tilt)</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -39,7 +39,6 @@
             background: #000;
         }
 
-        /* Area Input Manual */
         .manual-area {
             background: #2d2d2d;
             padding: 15px;
@@ -83,7 +82,6 @@
         }
         .btn-apply:hover { background: #45a049; }
 
-        /* Controls Slider */
         .controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -136,7 +134,7 @@
 <body>
 
     <div class="container">
-        <h2>Nokia Memo Creator (Quote Only)</h2>
+        <h2>Nokia Memo Creator (Natural Look)</h2>
         <div id="status">Ready.</div>
         
         <canvas id="nokiaCanvas"></canvas>
@@ -156,6 +154,11 @@
             <div class="input-group">
                 <label class="slider-label">Posisi Atas (Y): <span id="valY"></span></label>
                 <input type="range" id="posY" min="0" max="1000" value="636" oninput="drawCanvas()">
+            </div>
+
+            <div class="input-group">
+                <label class="slider-label">Rotasi Teks (Derajat): <span id="valRot"></span>°</label>
+                <input type="range" id="rot" min="-10" max="10" value="-2" step="0.5" oninput="drawCanvas()">
             </div>
 
             <div class="input-group">
@@ -235,19 +238,14 @@
         // --- FETCH SYSTEM ---
         function getSmartQuote() {
             $('#status').text("Mengambil data...");
-
             $.ajax({
-                method: 'GET',
-                url: API_URL,
-                timeout: 3000,
+                method: 'GET', url: API_URL, timeout: 3000,
                 success: function(result) {
-                    // Hanya ambil quote, abaikan author
                     updateInputAndCanvas(result.quote);
                     $('#status').text("Sumber: Internet");
                 },
                 error: function() {
                     const randomPick = LOCAL_DB[Math.floor(Math.random() * LOCAL_DB.length)];
-                    // LOCAL_DB sekarang hanya array string (tanpa author object)
                     updateInputAndCanvas(randomPick);
                     $('#status').text("Sumber: Offline Mode");
                 }
@@ -259,7 +257,6 @@
             applyManualText();
         }
 
-        // --- MANUAL INPUT ---
         function applyManualText() {
             const rawText = $('#inputQuote').val();
             if (!rawText) return;
@@ -267,48 +264,68 @@
             drawCanvas();
         }
 
-        // --- DRAWING LOGIC (NO AUTHOR) ---
+        // --- DRAWING LOGIC (DENGAN ROTASI) ---
         function drawCanvas() {
             if (!bgImg.complete) return;
 
+            // 1. Gambar Background (Lurus)
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImg, 0, 0);
 
+            // Ambil Slider Values
             const x = parseInt($('#posX').val());
             const y = parseInt($('#posY').val());
             const lh = parseInt($('#lineH').val());
             const fs = parseInt($('#fontS').val());
             const maxW = parseInt($('#maxW').val());
+            // Ambil nilai rotasi (float karena ada koma)
+            const rot = parseFloat($('#rot').val()); 
 
+            // Update Labels
             $('#valX').text(x);
             $('#valY').text(y);
             $('#valLH').text(lh);
             $('#valFS').text(fs);
             $('#valW').text(maxW);
+            $('#valRot').text(rot); // Update label rotasi
 
+            // Setting Font
             ctx.font = `${fs}px ${FONT_NAME}, monospace`;
             ctx.fillStyle = "#181818"; 
             ctx.textBaseline = "alphabetic"; 
 
+            // --- LOGIKA ROTASI ---
+            ctx.save(); // Simpan status canvas normal
+            
+            // 1. Pindahkan titik pusat (pivot) ke koordinat awal teks (x, y)
+            ctx.translate(x, y);
+            
+            // 2. Putar canvas sesuai derajat yang diminta (ubah ke radian)
+            ctx.rotate(rot * Math.PI / 180);
+
+            // --- LOGIKA WRAPPING & GAMBAR TEKS ---
             const words = currentText.split(' ');
             let line = '';
-            let currentY = y;
+            // Kita mulai menggambar dari titik (0, 0) relatif terhadap titik pusat baru
+            let relativeY = 0; 
 
             for (let n = 0; n < words.length; n++) {
                 let testLine = line + words[n] + ' ';
                 let metrics = ctx.measureText(testLine);
                 
                 if (metrics.width > maxW && n > 0) {
-                    ctx.fillText(line, x, currentY);
+                    // Gambar di koordinat relatif (0, relativeY)
+                    ctx.fillText(line, 0, relativeY);
                     line = words[n] + ' ';
-                    currentY += lh;
+                    relativeY += lh;
                 } else {
                     line = testLine;
                 }
             }
-            ctx.fillText(line, x, currentY);
-            
-            // BAGIAN AUTHOR SUDAH DIHAPUS DARI SINI
+            // Gambar baris terakhir
+            ctx.fillText(line, 0, relativeY);
+
+            ctx.restore(); // Kembalikan status canvas agar gambar lain tidak ikut miring
         }
 
         function downloadImg() {
