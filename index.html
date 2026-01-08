@@ -3,189 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nokia Daily Quote Generator</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Nokia Quote Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
     <div class="container">
-        <h1>Nokia 3310 Generator</h1>
-        
-        <div class="canvas-wrapper">
-            <canvas id="nokiaCanvas"></canvas>
-            <div id="loading">Mengambil Quote...</div>
+        <h1>Wise Quotes Daily</h1>
+        <div class="preview-area">
+            <img id="quote-image" src="" alt="Generated Quote will appear here" style="display: none;">
+            <div id="loading" style="display: none;">Generating...</div>
+            <div id="error-message" style="display: none; color: red;"></div>
         </div>
-
-        <div class="controls">
-            <button id="btnGenerate" class="btn retro-btn">New Quote</button>
-            <button id="btnDownload" class="btn retro-btn-secondary">Download Image</button>
-        </div>
-
-        <div class="footer">
-            <p>Font: Nokia Font Final | API: API-Ninjas</p>
-        </div>
+        <button id="generate-btn" onclick="generateImage()">Generate New Quote</button>
+        <p class="note">Make sure 'nokia_blank.png' and 'pixel_font.ttf' are in the 'static' folder!</p>
     </div>
 
     <script>
-        // --- KONFIGURASI ---
-        const API_KEY = "9zAnv7rg3z+Re3XeiyrFjg==DQRDaDt5Ln0kQm7w"; // API Key Anda
-        const API_URL = "https://api.api-ninjas.com/v1/quotes";
-        const TARGET_CATEGORIES = ['success', 'wisdom', 'life', 'inspirational', 'happiness', 'future'];
-        
-        // ASET FILE
-        const IMAGE_SRC = 'nokia_blank.png';
-        const FONT_NAME = 'NokiaFont';
-        const FONT_URL = 'nokia_font_final.ttf';
+        async function generateImage() {
+            const img = document.getElementById('quote-image');
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-message');
+            const btn = document.getElementById('generate-btn');
 
-        // PENGATURAN POSISI LAYAR (Sesuaikan angka ini agar pas dengan gambar nokia_blank.png Anda)
-        // Koordinat ini adalah estimasi. Silakan ubah jika teks miring atau keluar garis.
-        const SCREEN_CONFIG = {
-            x: 55,      // Jarak dari kiri gambar ke awal layar
-            y: 80,      // Jarak dari atas gambar ke awal layar
-            w: 160,     // Lebar area layar hijau
-            h: 110,     // Tinggi area layar hijau
-            fontSize: 16, // Ukuran font
-            lineHeight: 20, // Jarak antar baris
-            textColor: "#000000", // Warna teks (Hitam)
-            rotation: -4 // (Opsional) Jika gambar HP miring, atur rotasi teks (derajat)
-        };
+            img.style.display = 'none';
+            loading.style.display = 'block';
+            errorMsg.style.display = 'none';
+            btn.disabled = true;
 
-        // --- SETUP CANVAS & FONT ---
-        const canvas = document.getElementById('nokiaCanvas');
-        const ctx = canvas.getContext('2d');
-        const loadingDiv = document.getElementById('loading');
-        
-        // Memuat Font Custom terlebih dahulu
-        async function loadFont() {
-            const font = new FontFace(FONT_NAME, `url(${FONT_URL})`);
-            await font.load();
-            document.fonts.add(font);
-            return font;
-        }
-
-        // --- FUNGSI UTAMA ---
-
-        // 1. Ambil Quote dari API
-        async function fetchQuote() {
-            loadingDiv.style.display = 'block';
-            const category = TARGET_CATEGORIES[Math.floor(Math.random() * TARGET_CATEGORIES.length)];
-            
             try {
-                const response = await fetch(`${API_URL}?category=${category}`, {
-                    method: 'GET',
-                    headers: { 'X-Api-Key': API_KEY }
-                });
+                const response = await fetch('/generate');
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to generate image');
+                }
                 
-                if (!response.ok) throw new Error('API Error');
-                
-                const data = await response.json();
-                const quoteText = `"${data[0].quote}"`; // Menambah tanda kutip
-                const authorText = `- ${data[0].author}`;
-                
-                drawImageWithText(quoteText, authorText);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                img.src = url;
+                img.style.display = 'block';
             } catch (error) {
-                console.error(error);
-                drawImageWithText("Failed to load quote.", "Check API Key");
+                errorMsg.textContent = error.message;
+                errorMsg.style.display = 'block';
             } finally {
-                loadingDiv.style.display = 'none';
+                loading.style.display = 'none';
+                btn.disabled = false;
             }
         }
 
-        // 2. Gambar Template dan Teks ke Canvas
-        function drawImageWithText(text, author) {
-            const img = new Image();
-            img.src = IMAGE_SRC;
-            
-            img.onload = () => {
-                // Set ukuran canvas sesuai gambar asli
-                canvas.width = img.width;
-                canvas.height = img.height;
-
-                // Gambar HP Nokia (Background)
-                ctx.drawImage(img, 0, 0);
-
-                // Setup Font
-                ctx.font = `${SCREEN_CONFIG.fontSize}px ${FONT_NAME}`;
-                ctx.fillStyle = SCREEN_CONFIG.textColor;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-
-                // (Opsional) Rotasi jika layar HP miring
-                ctx.save(); 
-                // Pindahkan titik pusat ke tengah layar HP untuk rotasi
-                const centerX = SCREEN_CONFIG.x + SCREEN_CONFIG.w / 2;
-                const centerY = SCREEN_CONFIG.y + SCREEN_CONFIG.h / 2;
-                
-                if (SCREEN_CONFIG.rotation !== 0) {
-                    ctx.translate(centerX, centerY);
-                    ctx.rotate(SCREEN_CONFIG.rotation * Math.PI / 180);
-                    ctx.translate(-centerX, -centerY);
-                }
-
-                // Logika Word Wrapping (Agar teks tidak bablas ke samping)
-                const maxWidth = SCREEN_CONFIG.w - 10; // Padding kiri kanan 5px
-                const lines = getLines(ctx, text, maxWidth);
-                
-                // Tambahkan author di baris baru
-                // lines.push(" "); // Spasi
-                lines.push(author);
-
-                // Gambar Teks Baris per Baris
-                const totalHeight = lines.length * SCREEN_CONFIG.lineHeight;
-                let startY = centerY - (totalHeight / 2) + (SCREEN_CONFIG.lineHeight / 2);
-
-                lines.forEach((line, i) => {
-                    ctx.fillText(line, centerX, startY + (i * SCREEN_CONFIG.lineHeight));
-                });
-
-                ctx.restore(); // Kembalikan rotasi normal
-            };
-        }
-
-        // Helper: Memecah kalimat panjang menjadi baris-baris
-        function getLines(ctx, text, maxWidth) {
-            const words = text.split(" ");
-            let lines = [];
-            let currentLine = words[0];
-
-            for (let i = 1; i < words.length; i++) {
-                let word = words[i];
-                let width = ctx.measureText(currentLine + " " + word).width;
-                if (width < maxWidth) {
-                    currentLine += " " + word;
-                } else {
-                    lines.push(currentLine);
-                    currentLine = word;
-                }
-            }
-            lines.push(currentLine);
-            return lines;
-        }
-
-        // 3. Download Gambar
-        function downloadImage() {
-            const link = document.createElement('a');
-            link.download = 'nokia-daily-quote.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        }
-
-        // --- EVENT LISTENERS ---
-        document.getElementById('btnGenerate').addEventListener('click', fetchQuote);
-        document.getElementById('btnDownload').addEventListener('click', downloadImage);
-
-        // --- INIT ---
-        // Mulai saat halaman diload
-        window.addEventListener('load', async () => {
-            try {
-                await loadFont();
-                fetchQuote(); // Generate quote pertama otomatis
-            } catch (e) {
-                console.error("Font failed to load", e);
-                fetchQuote(); // Tetap jalankan meski font gagal (pakai default)
-            }
-        });
-
+        // Generate one on load
+        window.onload = generateImage;
     </script>
 </body>
 </html>
