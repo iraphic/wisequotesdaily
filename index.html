@@ -241,8 +241,11 @@
             $.ajax({
                 method: 'GET', url: API_URL, timeout: 3000,
                 success: function(result) {
-                    updateInputAndCanvas(result.quote);
-                    $('#status').text("Sumber: Internet");
+                    const first = Array.isArray(result) ? (result[0] || {}) : (result || {});
+                    const quote = first.quote || "";
+                    const author = first.author || "Internet";
+                    updateInputAndCanvas(quote);
+                    $('#status').text(`Sumber: ${author}`);
                 },
                 error: function() {
                     const randomPick = LOCAL_DB[Math.floor(Math.random() * LOCAL_DB.length)];
