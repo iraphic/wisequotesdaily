@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poster Lowongan Sederhana</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        @font-face {
+            font-family: 'HelveticaCustom';
+            src: url('Helvetica.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'CoolveticaCustom';
+            src: url('coolvetica rg.ttf') format('truetype');
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -67,13 +77,13 @@
                 <label><b>Footer (Ajakan/Email)</b></label>
                 <div class="slider-row">
                     <label>Size:</label> 
-                    <input type="range" id="s_footer_size" min="10" max="80" value="35">
-                    <input type="number" id="n_footer_size" value="35" min="10" max="80" style="width: 60px;">
+                    <input type="range" id="s_footer_size" min="10" max="80" value="51">
+                    <input type="number" id="n_footer_size" value="51" min="10" max="80" style="width: 60px;">
                 </div>
                 <div class="slider-row">
                     <label>Y-Pos:</label> 
-                    <input type="range" id="s_footer_y" min="10" max="90" value="64">
-                    <input type="number" id="n_footer_y" value="64" min="10" max="90" style="width: 60px;">
+                    <input type="range" id="s_footer_y" min="10" max="90" value="74">
+                    <input type="number" id="n_footer_y" value="74" min="10" max="90" style="width: 60px;">
                 </div>
             </div>
         </details>
@@ -169,20 +179,20 @@
                 ctx.shadowColor = 'rgba(0,0,0,0.5)';
                 ctx.shadowBlur = 15;
                 ctx.shadowOffsetY = 4;
-                ctx.font = `bold ${settings.posisi.size * baseScale}px "Segoe UI", Arial, sans-serif`; 
+                ctx.font = `bold ${settings.posisi.size * baseScale}px "HelveticaCustom", "Helvetica", Arial, sans-serif`; 
                 const yPosisi = canvas.height * settings.posisi.y; 
                 ctx.fillText((data.posisi || '').toUpperCase(), cx, yPosisi);
                 ctx.restore();
 
                 // --- LOKASI ---
                 // Font Sedang, Bold
-                ctx.font = `bold ${settings.lokasi.size * baseScale}px "Segoe UI", Arial, sans-serif`;
+                ctx.font = `bold ${settings.lokasi.size * baseScale}px "HelveticaCustom", "Helvetica", Arial, sans-serif`;
                 const yLokasi = canvas.height * settings.lokasi.y;
                 ctx.fillText((data.lokasi || ''), cx, yLokasi);
 
                 // --- PERUSAHAAN ---
                 // Font Besar tapi lebih kecil dari Posisi
-                ctx.font = `bold ${settings.perusahaan.size * baseScale}px "Segoe UI", Arial, sans-serif`;
+                ctx.font = `bold ${settings.perusahaan.size * baseScale}px "HelveticaCustom", "Helvetica", Arial, sans-serif`;
                 const yPerusahaan = canvas.height * settings.perusahaan.y;
                 const perusahaanLines = getLines(ctx, data.perusahaan || '', canvas.width * 0.9);
                 perusahaanLines.forEach((line, i) => {
@@ -191,7 +201,7 @@
 
                 // --- AJAKAN & EMAIL ---
                 // Font Kecil
-                ctx.font = `${settings.footer.size * baseScale}px "Segoe UI", Arial, sans-serif`;
+                ctx.font = `${settings.footer.size * baseScale}px "CoolveticaCustom", "Coolvetica", Arial, sans-serif`;
                 const yFooter = canvas.height * settings.footer.y; 
                 // Gabung ajakan dan email atau pisah baris
                 const ajakanText = data.ajakan || '';
@@ -287,7 +297,10 @@
             document.getElementById('ajakan').value = defaultData.ajakan;
             document.getElementById('email').value = defaultData.email;
 
-            drawPoster(defaultData);
+            // Pastikan font sudah terload sebelum menggambar pertama kali
+            document.fonts.ready.then(() => {
+                drawPoster(defaultData);
+            });
         });
     </script>
 </body>

@@ -94,6 +94,19 @@ canvas {
     opacity: 0.9;
 }
 
+/* Style khusus untuk input text agar punya border */
+input.btn {
+    border: 2px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    transition: border-color 0.3s;
+}
+
+input.btn:focus {
+    border-color: #2b7a78;
+    outline: none;
+}
+
 .footer {
     margin-top: 20px;
     font-size: 0.8rem;
